@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Taos Manager (Offline)</title>
+  <style>
+    :root{
+      --bg:#0b0b10;
+      --card: rgba(255,255,255,0.92);
+      --text:#12131a;
+      --muted: rgba(18,19,26,0.65);
+      --line: rgba(18,19,26,0.10);
+      --bar: rgba(20,20,28,0.70);
+      --btn: rgba(255,255,255,0.16);
+      --btnHover: rgba(255,255,255,0.22);
+      --blue:#2f6cff;
+      --blueHover:#2458cc;
+      --shadow: 0 22px 60px rgba(0,0,0,0.45);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      color:var(--text);
+      background: var(--bg);
+    }
+    .bg{
+      position:fixed; inset:0;
+      background:
+        linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.55)),
+        radial-gradient(1000px 500px at 10% 10%, rgba(150,80,255,0.35), transparent 60%),
+        radial-gradient(900px 450px at 90% 20%, rgba(70,120,255,0.28), transparent 55%),
+        radial-gradient(800px 450px at 50% 90%, rgba(255,70,200,0.18), transparent 60%);
+      z-index:-2;
+    }
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      padding: 14px 16px;
+      background: var(--bar);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom:1px solid rgba(255,255,255,0.10);
+    }
+    .brand{
+      display:flex; gap:10px; align-items:center;
+      min-width: 150px;
+    }
+    .logo{
+      width:38px; height:38px; border-radius:10px;
+      background: rgba(255,255,255,0.14);
+      display:flex; align-items:center; justify-content:center;
+      color:white; font-weight:900;
+    }
+    .brandText{display:flex; flex-direction:column; line-height:1.1;}
+    .brandText .title{color:white; font-weight:900; font-size:14px;}
+    .brandText .sub{color:rgba(255,255,255,0.75); font-size:12px; margin-top:2px;}
+    .nav{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+    .btn{
+      appearance:none; border:1px solid rgba(255,255,255,0.16);
+      background: var(--btn); color:white;
+      padding: 9px 11px; border-radius: 10px;
+      font-weight:800; font-size:13px;
+      cursor:pointer; text-decoration:none;
+      display:inline-flex; align-items:center; gap:8px;
+      transition:120ms ease;
+      white-space:nowrap;
+    }
+    .btn:hover{background:var(--btnHover); transform: translateY(-1px);}
+    .btn.primary{background:var(--blue); border-color: rgba(255,255,255,0.10);}
+    .btn.primary:hover{background:var(--blueHover);}
+    .wrap{max-width: 1040px; margin: 18px auto 40px; padding: 0 14px;}
+    .card{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.40);
+    }
+    .cardHeader{padding: 18px 18px 12px; border-bottom:1px solid var(--line);}
+    .cardHeader h1{margin:0; font-size:18px; letter-spacing:0.2px;}
+    .cardHeader p{margin:6px 0 0; font-size:13px; color:var(--muted);}
+    .cardBody{padding: 16px 18px 18px;}
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .tile{
+      border:1px solid rgba(18,19,26,0.10);
+      background: rgba(255,255,255,0.80);
+      border-radius: 14px;
+      padding: 14px;
+      text-decoration:none;
+      color:inherit;
+      transition:120ms ease;
+      min-height: 86px;
+      display:flex; flex-direction:column; justify-content:space-between;
+    }
+    .tile:hover{transform: translateY(-2px); box-shadow: 0 18px 40px rgba(0,0,0,0.10);}
+    .tile h3{margin:0; font-size:15px; font-weight:900;}
+    .tile p{margin:6px 0 0; font-size:12px; color:var(--muted);}
+    .row{display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap;}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(18,19,26,0.12);
+      background: rgba(255,255,255,0.70);
+      font-weight:900; font-size:13px;
+    }
+    .panel{
+      border:1px solid rgba(18,19,26,0.10);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.80);
+      padding: 14px;
+    }
+    .formGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px 14px;
+      align-items:end;
+    }
+    .field{display:flex; flex-direction:column; gap:6px;}
+    label{font-weight:900; font-size:12px; color:rgba(18,19,26,0.85);}
+    input, select, textarea{
+      width:100%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(18,19,26,0.16);
+      background:white;
+      font-size:14px;
+      outline:none;
+    }
+    textarea{min-height:110px; resize:vertical;}
+    .full{grid-column: 1 / -1;}
+    .muted{color:var(--muted); font-size:13px;}
+    .list{display:grid; gap:10px;}
+    .item{
+      border:1px solid rgba(18,19,26,0.10);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.80);
+      padding: 12px 14px;
+    }
+    .itemTop{display:flex; gap:10px; align-items:flex-start; justify-content:space-between;}
+    .itemTitle{font-weight:1000;}
+    .badge{
+      font-weight:1000; font-size:12px;
+      padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(18,19,26,0.12);
+      background: rgba(255,255,255,0.70);
+      white-space:nowrap;
+    }
+    .actionsRow{display:flex; gap:10px; align-items:center; justify-content:space-between; margin-top:12px; flex-wrap:wrap;}
+    .danger{
+      border-color: rgba(220,38,38,0.25) !important;
+      background: rgba(220,38,38,0.10) !important;
+      color: #7f1d1d !important;
+    }
+    .foot{margin-top: 12px; text-align:center; color: rgba(255,255,255,0.65); font-size:12px;}
+
+    /* Mobile */
+    @media (max-width: 980px){ .grid{grid-template-columns: repeat(2, minmax(0,1fr));} }
+    @media (max-width: 620px){
+      .brandText .sub{display:none;}
+      .wrap{margin-top: 14px;}
+      .cardHeader{padding: 16px;}
+      .cardBody{padding: 14px 16px 16px;}
+      .formGrid{grid-template-columns: 1fr;}
+      .grid{grid-template-columns: 1fr;}
+    }
+
+    /* Print styling for “Save as PDF” */
+    @media print{
+      body{background:white;}
+      .bg,.topbar,.foot,.noPrint{display:none !important;}
+      .wrap{max-width: 100%; margin:0; padding:0;}
+      .card{box-shadow:none; border:none; border-radius:0;}
+      .cardBody{padding: 0;}
+      .panel,.item{border:1px solid #ddd; background:white;}
+    }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">T</div>
+      <div class="brandText">
+        <div class="title">Taos Manager</div>
+        <div class="sub">Offline reporting • stays on device</div>
+      </div>
+    </div>
+
+    <div class="nav noPrint">
+      <button class="btn" onclick="go('submitted')">Submitted</button>
+      <button class="btn" onclick="go('employees')">Employee List</button>
+      <button class="btn primary" onclick="go('new')">+ New</button>
+      <button class="btn" onclick="go('home')">Home</button>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <section class="card">
+      <header class="cardHeader">
+        <h1 id="pageTitle">Home</h1>
+        <p id="pageSub" class="muted">Choose a section to submit.</p>
+      </header>
+
+      <div class="cardBody" id="view"></div>
+    </section>
+
+    <div class="foot">No server • No logins • Stored locally on this device</div>
+  </main>
+
+<script>
+  // ---------- Storage ----------
+  const KEY = "taos_manager_offline_v1";
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(KEY);
+      if(!raw) return { submissions: [] };
+      const obj = JSON.parse(raw);
+      if(!obj.submissions) obj.submissions = [];
+      return obj;
+    }catch(e){
+      return { submissions: [] };
+    }
+  }
+
+  function saveState(state){
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  function uid(){
+    return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
+  }
+
+  function nowISO(){
+    return new Date().toISOString();
+  }
+
+  function fmtDT(iso){
+    const d = new Date(iso);
+    return d.toLocaleString();
+  }
+
+  function normalizeName(s){
+    return (s || "").trim().replace(/\s+/g, " ");
+  }
+
+  // ---------- Routing ----------
+  function go(route, param){
+    const hash = param ? `#${route}/${encodeURIComponent(param)}` : `#${route}`;
+    location.hash = hash;
+  }
+
+  function current(){
+    const h = (location.hash || "#home").replace(/^#/, "");
+    const [route, ...rest] = h.split("/");
+    const param = rest.length ? decodeURIComponent(rest.join("/")) : null;
+    return { route: route || "home", param };
+  }
+
+  window.addEventListener("hashchange", render);
+
+  // ---------- Views ----------
+  const SUBMIT_TYPES = [
+    "Performance",
+    "Register Accuracy",
+    "Attendance",
+    "Uniform",
+    "Monthly Review",
+    "Tasks",
+  ];
+
+  const RATINGS = [
+    "Excellent",
+    "Good",
+    "Needs Improvement",
+    "Unacceptable",
+  ];
+
+  function setHeader(title, sub){
+    document.getElementById("pageTitle").textContent = title;
+    document.getElementById("pageSub").textContent = sub || "";
+  }
+
+  function homeView(){
+    setHeader("Home", "Start with Performance. We can add more sections anytime.");
+    const view = document.getElementById("view");
+    view.innerHTML = `
+      <div class="grid noPrint">
+        <a class="tile" href="javascript:void(0)" onclick="go('new')">
+          <div>
+            <h3>New Report</h3>
+            <p>Create a spot check on the fly.</p>
+          </div>
+          <div class="row"><span class="pill">Fast</span><span class="pill">Offline</span></div>
+        </a>
+
+        <a class="tile" href="javascript:void(0)" onclick="go('submitted')">
+          <div>
+            <h3>Submitted</h3>
+            <p>Everyone shown, grouped by type.</p>
+          </div>
+          <div class="row"><span class="pill">Organized</span></div>
+        </a>
+
+        <a class="tile" href="javascript:void(0)" onclick="go('employees')">
+          <div>
+            <h3>Employee List</h3>
+            <p>Auto-built from submissions.</p>
+          </div>
+          <div class="row"><span class="pill">History</span></div>
+        </a>
+
+        <a class="tile" href="javascript:void(0)" onclick="go('settings')">
+          <div>
+            <h3>Export / Import</h3>
+            <p>Move data between devices (AirDrop/iCloud).</p>
+          </div>
+          <div class="row"><span class="pill">Private</span></div>
+        </a>
+      </div>
+
+      <div style="height:14px"></div>
+
+      <div class="panel">
+        <div class="itemTitle">How to email or PDF</div>
+        <div class="muted" style="margin-top:6px">
+          When you open a submission, tap <b>Print / Save as PDF</b> (or Share) on your phone.
+          This keeps everything offline — no accounts, no server.
+        </div>
+      </div>
+    `;
+  }
+
+  function newView(){
+    setHeader("New Report", "Fill out a check. It saves locally on this phone.");
+    const view = document.getElementById("view");
+    const today = new Date().toISOString().slice(0,10);
+
+    view.innerHTML = `
+      <form class="panel" id="newForm">
+        <div class="formGrid">
+          <div class="field full">
+            <label>Employee Name</label>
+            <input name="employee" placeholder="e.g., Liz" required />
+          </div>
+
+          <div class="field">
+            <label>Type</label>
+            <select name="type">
+              ${SUBMIT_TYPES.map(t => `<option>${t}</option>`).join("")}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Rating</label>
+            <select name="rating">
+              ${RATINGS.map(r => `<option>${r}</option>`).join("")}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Date</label>
+            <input type="date" name="date" value="${today}" />
+          </div>
+
+          <div class="field">
+            <label>Location (optional)</label>
+            <input name="location" placeholder="Taos / Shift / Station..." />
+          </div>
+
+          <div class="field full">
+            <label>Comments</label>
+            <textarea name="comments" placeholder="What happened? coaching points? follow-ups? wins?"></textarea>
+          </div>
+        </div>
+
+        <div class="actionsRow noPrint">
+          <button type="button" class="btn danger" onclick="resetForm()">Clear</button>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button type="button" class="btn" onclick="go('home')">Cancel</button>
+            <button type="submit" class="btn primary">Save</button>
+          </div>
+        </div>
+      </form>
+    `;
+
+    document.getElementById("newForm").addEventListener("submit", (e)=>{
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const employee = normalizeName(fd.get("employee"));
+      if(!employee){
+        alert("Employee name is required.");
+        return;
+      }
+
+      const state = loadState();
+      const sub = {
+        id: uid(),
+        created_at: nowISO(),
+        employee,
+        type: (fd.get("type") || "Performance").toString(),
+        rating: (fd.get("rating") || "Good").toString(),
+        date: (fd.get("date") || "").toString(),
+        location: (fd.get("location") || "").toString(),
+        comments: (fd.get("comments") || "").toString(),
+      };
+      state.submissions.unshift(sub);
+      saveState(state);
+      go("view", sub.id);
+    });
+  }
+
+  function resetForm(){
+    if(confirm("Clear the form?")){
+      const f = document.getElementById("newForm");
+      if(f) f.reset();
+    }
+  }
+
+  function submittedView(){
+    setHeader("Submitted", "Everyone shown • grouped by type • stored on this device");
+    const view = document.getElementById("view");
+    const state = loadState();
+
+    const q = new URLSearchParams(location.hash.split("?")[1] || "");
+    const search = (q.get("q") || "").trim().toLowerCase();
+
+    const subs = state.submissions.filter(s=>{
+      if(!search) return true;
+      return (
+        (s.employee||"").toLowerCase().includes(search) ||
+        (s.type||"").toLowerCase().includes(search) ||
+        (s.rating||"").toLowerCase().includes(search) ||
+        (s.comments||"").toLowerCase().includes(search)
+      );
+    });
+
+    const groups = {};
+    for(const s of subs){
+      groups[s.type] = groups[s.type] || [];
+      groups[s.type].push(s);
+    }
+
+    const groupKeys = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
+
+    view.innerHTML = `
+      <div class="panel noPrint" style="margin-bottom:12px;">
+        <div class="row">
+          <div class="pill">Total: ${state.submissions.length}</div>
+          <button class="btn danger" onclick="clearAll()">Delete All</button>
+        </div>
+        <div style="height:10px"></div>
+        <div class="field" style="margin:0;">
+          <label>Search</label>
+          <input id="searchBox" placeholder="Name, type, rating, comments..." value="${escapeHtml(search)}" />
+        </div>
+      </div>
+
+      ${groupKeys.length === 0 ? `<div class="panel"><div class="muted">No submissions yet.</div></div>` : ""}
+
+      ${groupKeys.map(k => `
+        <div class="panel" style="margin-bottom:12px;">
+          <div class="row">
+            <div class="itemTitle">${escapeHtml(k)}</div>
+            <div class="muted">${groups[k].length} item(s)</div>
+          </div>
+          <div style="height:10px"></div>
+          <div class="list">
+            ${groups[k].map(s => itemRow(s)).join("")}
+          </div>
+        </div>
+      `).join("")}
+    `;
+
+    const box = document.getElementById("searchBox");
+    if(box){
+      box.addEventListener("input", ()=>{
+        const v = box.value.trim();
+        const base = "#submitted";
+        const next = v ? `${base}?q=${encodeURIComponent(v)}` : base;
+        location.hash = next;
+      });
+    }
+  }
+
+  function itemRow(s){
+    return `
+      <div class="item">
+        <div class="itemTop">
+          <div>
+            <div class="itemTitle">${escapeHtml(s.employee)}</div>
+            <div class="muted">${escapeHtml(s.type)} • ${escapeHtml(s.rating)} • ${escapeHtml(s.date || "")}</div>
+            <div class="muted">${escapeHtml(fmtDT(s.created_at))}${s.location ? " • " + escapeHtml(s.location) : ""}</div>
+          </div>
+          <div class="badge">${escapeHtml(s.rating)}</div>
+        </div>
+        ${s.comments ? `<div style="margin-top:10px; white-space:pre-wrap;">${escapeHtml(s.comments)}</div>` : ""}
+        <div class="actionsRow noPrint">
+          <button class="btn" onclick="go('employee','${encodeURIComponent(s.employee)}')">Employee</button>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn" onclick="go('view','${encodeURIComponent(s.id)}')">Open</button>
+            <button class="btn danger" onclick="delOne('${encodeURIComponent(s.id)}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function employeesView(){
+    setHeader("Employee List", "Built automatically from your submissions (on this device)");
+    const view = document.getElementById("view");
+    const state = loadState();
+
+    const map = new Map();
+    for(const s of state.submissions){
+      const name = s.employee;
+      const prev = map.get(name) || { count:0, last: s.created_at };
+      prev.count += 1;
+      if(new Date(s.created_at) > new Date(prev.last)) prev.last = s.created_at;
+      map.set(name, prev);
+    }
+
+    const rows = [...map.entries()]
+      .sort((a,b)=> new Date(b[1].last) - new Date(a[1].last));
+
+    view.innerHTML = `
+      <div class="panel noPrint" style="margin-bottom:12px;">
+        <div class="row">
+          <div class="pill">Employees: ${rows.length}</div>
+          <button class="btn" onclick="go('submitted')">View All</button>
+        </div>
+      </div>
+
+      ${rows.length === 0 ? `<div class="panel"><div class="muted">No employees yet. Create a submission first.</div></div>` : `
+        <div class="list">
+          ${rows.map(([name, info])=>`
+            <div class="item">
+              <div class="itemTop">
+                <div>
+                  <div class="itemTitle">${escapeHtml(name)}</div>
+                  <div class="muted">${info.count} submit(s) • Last: ${escapeHtml(fmtDT(info.last))}</div>
+                </div>
+                <button class="btn primary noPrint" onclick="go('employee','${encodeURIComponent(name)}')">Open</button>
+              </div>
+            </div>
+          `).join("")}
+        </div>
+      `}
+    `;
+  }
+
+  function employeeView(name){
+    const employee = normalizeName(name);
+    setHeader(employee, "All submissions for this employee (on this device)");
+    const view = document.getElementById("view");
+    const state = loadState();
+
+    const rows = state.submissions.filter(s=> s.employee === employee);
+
+    view.innerHTML = `
+      <div class="panel noPrint" style="margin-bottom:12px;">
+        <div class="row">
+          <div class="pill">Total: ${rows.length}</div>
+          <button class="btn" onclick="go('employees')">Back</button>
+        </div>
+      </div>
+
+      ${rows.length === 0 ? `<div class="panel"><div class="muted">No submissions found yet.</div></div>` : `
+        <div class="list">
+          ${rows.map(s=> itemRow(s)).join("")}
+        </div>
+      `}
+    `;
+  }
+
+  function viewOne(id){
+    const view = document.getElementById("view");
+    const state = loadState();
+    const s = state.submissions.find(x => x.id === id);
+    if(!s){
+      setHeader("Not found", "That submission doesn’t exist on this device.");
+      view.innerHTML = `<div class="panel"><div class="muted">Missing submission.</div></div>`;
+      return;
+    }
+
+    setHeader("Submission", "Use Print → Save as PDF to archive/share.");
+
+    view.innerHTML = `
+      <div class="panel">
+        <div class="row">
+          <div class="itemTitle">${escapeHtml(s.employee)}</div>
+          <div class="badge">${escapeHtml(s.rating)}</div>
+        </div>
+        <div class="muted" style="margin-top:6px">${escapeHtml(s.type)} • ${escapeHtml(s.date || "")}</div>
+        <div class="muted">${escapeHtml(fmtDT(s.created_at))}${s.location ? " • " + escapeHtml(s.location) : ""}</div>
+
+        ${s.comments ? `<div style="margin-top:14px; white-space:pre-wrap;">${escapeHtml(s.comments)}</div>` : `<div class="muted" style="margin-top:14px">No comments.</div>`}
+
+        <div class="actionsRow noPrint">
+          <button class="btn" onclick="go('employee','${encodeURIComponent(s.employee)}')">Employee</button>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn" onclick="window.print()">Print / Save as PDF</button>
+            <button class="btn danger" onclick="delOne('${encodeURIComponent(s.id)}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function settingsView(){
+    setHeader("Export / Import", "Move your data between devices privately.");
+    const view = document.getElementById("view");
+    view.innerHTML = `
+      <div class="panel">
+        <div class="itemTitle">Export (backup or share)</div>
+        <div class="muted" style="margin-top:6px">
+          This downloads a JSON file containing all submissions on <b>this device</b>.
+          You can AirDrop it to your assistant or save it in iCloud Drive.
+        </div>
+        <div class="actionsRow noPrint" style="margin-top:12px">
+          <button class="btn primary" onclick="exportJSON()">Export JSON</button>
+          <button class="btn danger" onclick="clearAll()">Delete All</button>
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="panel">
+        <div class="itemTitle">Import</div>
+        <div class="muted" style="margin-top:6px">
+          Choose a JSON export file to merge into this device’s data.
+        </div>
+        <div class="actionsRow noPrint" style="margin-top:12px">
+          <input type="file" id="importFile" accept="application/json" />
+          <button class="btn" onclick="importJSON()">Import</button>
+        </div>
+      </div>
+    `;
+  }
+
+  // ---------- Actions ----------
+  function delOne(idEnc){
+    const id = decodeURIComponent(idEnc);
+    if(!confirm("Delete this submission?")) return;
+    const state = loadState();
+    state.submissions = state.submissions.filter(s=> s.id !== id);
+    saveState(state);
+    go("submitted");
+  }
+
+  function clearAll(){
+    if(!confirm("Delete ALL submissions on this device?")) return;
+    saveState({ submissions: [] });
+    go("submitted");
+  }
+
+  function exportJSON(){
+    const state = loadState();
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `taos_manager_export_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  async function importJSON(){
+    const el = document.getElementById("importFile");
+    if(!el || !el.files || !el.files[0]){ alert("Choose a JSON file first."); return; }
+    const text = await el.files[0].text();
+    let incoming;
+    try{ incoming = JSON.parse(text); }catch(e){ alert("Invalid JSON file."); return; }
+    if(!incoming || !Array.isArray(incoming.submissions)){ alert("This file doesn’t look like a Taos export."); return; }
+
+    const state = loadState();
+    const existingIds = new Set(state.submissions.map(s=>s.id));
+    for(const s of incoming.submissions){
+      if(s && s.id && !existingIds.has(s.id)){
+        state.submissions.push(s);
+      }
+    }
+    // newest first
+    state.submissions.sort((a,b)=> new Date(b.created_at) - new Date(a.created_at));
+    saveState(state);
+    alert("Import complete.");
+    go("submitted");
+  }
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function render(){
+    const {route, param} = current();
+    if(route === "home") return homeView();
+    if(route === "new") return newView();
+    if(route === "submitted") return submittedView();
+    if(route === "employees") return employeesView();
+    if(route === "employee") return employeeView(param || "");
+    if(route === "view") return viewOne(param || "");
+    if(route === "settings") return settingsView();
+    // fallback
+    go("home");
+  }
+
+  // Boot
+  if(!location.hash) location.hash = "#home";
+  render();
+</script>
+</body>
+</html>
