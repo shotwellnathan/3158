@@ -400,7 +400,11 @@ function weekTable(weekStart, idx){
 
 function bindGridEvents(){
   document.querySelectorAll("[data-emp][data-date][data-field]").forEach(el => {
-    el.oninput = el.onchange = () => setShift(el.dataset.emp, el.dataset.date, {[el.dataset.field]: el.value});
+    el.onchange = () => {
+      setShift(el.dataset.emp, el.dataset.date, {
+        [el.dataset.field]: el.value
+      });
+    };
   });
 }
 
