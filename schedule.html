@@ -243,7 +243,7 @@ function getShift(employeeId, dateStr){
 function setShift(employeeId, dateStr, patch){
   const key = getKey(employeeId, dateStr);
   state.schedule[key] = {...getShift(employeeId, dateStr), ...patch};
-  saveState(); render();
+  saveState();
 }
 function isOff(employeeId, dateStr){
   return state.timeoffs.some(t => t.employeeId === employeeId && dateStr >= t.start && dateStr <= t.end);
@@ -404,6 +404,9 @@ function bindGridEvents(){
       setShift(el.dataset.emp, el.dataset.date, {
         [el.dataset.field]: el.value
       });
+
+      // refresh after the browser finishes moving focus
+      setTimeout(() => render(), 0);
     };
   });
 }
