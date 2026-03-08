@@ -196,10 +196,11 @@
     </div>
 
     <div class="nav noPrint">
-      <button class="btn" onclick="go('submitted')">Submitted</button>
-      <button class="btn" onclick="go('employees')">Employee List</button>
-      <button class="btn primary" onclick="go('new')">+ New</button>
-      <button class="btn" onclick="go('home')">Home</button>
+  <a class="btn" href="schedule.html">Schedule Maker</a>
+  <button class="btn" onclick="go('submitted')">Submitted</button>
+  <button class="btn" onclick="go('employees')">Employee List</button>
+  <button class="btn primary" onclick="go('new')">+ New</button>
+  <button class="btn" onclick="go('home')">Home</button>
     </div>
   </div>
 
@@ -294,39 +295,47 @@
     setHeader("Home", "");
     const view = document.getElementById("view");
     view.innerHTML = `
-      <div class="grid noPrint">
-        <a class="tile" href="javascript:void(0)" onclick="go('new')">
-          <div>
-            <h3>New Report</h3>
-            <p>Create a spot check</p>
-          </div>
-          <div class="row"><span class="pill">Start New</span></div>
-        </a>
-
-        <a class="tile" href="javascript:void(0)" onclick="go('submitted')">
-          <div>
-            <h3>Submitted</h3>
-            <p>Grouped by type</p>
-          </div>
-          <div class="row"><span class="pill">Organized</span></div>
-        </a>
-
-        <a class="tile" href="javascript:void(0)" onclick="go('employees')">
-          <div>
-            <h3>Employee List</h3>
-            <p>Auto-built from submissions.</p>
-          </div>
-          <div class="row"><span class="pill">History</span></div>
-        </a>
-
-        <a class="tile" href="javascript:void(0)" onclick="go('settings')">
-          <div>
-            <h3>Export / Import</h3>
-            <p>Move data between devices.</p>
-          </div>
-          <div class="row"><span class="pill">Private</span></div>
-        </a>
+  <div class="grid noPrint">
+    <a class="tile" href="javascript:void(0)" onclick="go('new')">
+      <div>
+        <h3>New Report</h3>
+        <p>Create a spot check</p>
       </div>
+      <div class="row"><span class="pill">Start New</span></div>
+    </a>
+
+    <a class="tile" href="javascript:void(0)" onclick="go('submitted')">
+      <div>
+        <h3>Submitted</h3>
+        <p>Grouped by type</p>
+      </div>
+      <div class="row"><span class="pill">Organized</span></div>
+    </a>
+
+    <a class="tile" href="javascript:void(0)" onclick="go('employees')">
+      <div>
+        <h3>Employee List</h3>
+        <p>Auto-built from submissions.</p>
+      </div>
+      <div class="row"><span class="pill">History</span></div>
+    </a>
+
+    <a class="tile" href="schedule.html">
+      <div>
+        <h3>Schedule Maker</h3>
+        <p>Build and print weekly schedules.</p>
+      </div>
+      <div class="row"><span class="pill">Desktop Tool</span></div>
+    </a>
+
+    <a class="tile" href="javascript:void(0)" onclick="go('settings')">
+      <div>
+        <h3>Export / Import</h3>
+        <p>Move data between devices.</p>
+      </div>
+      <div class="row"><span class="pill">Private</span></div>
+    </a>
+  </div>
 
       <div style="height:14px"></div>
 
