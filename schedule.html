@@ -63,16 +63,105 @@
     .off-sub{font-size:11px;font-weight:700}
     .weekly-hours{font-size:14px;font-weight:900}
     .legend{font-size:12px;color:var(--muted);line-height:1.45}
-    @media print{
-      body{background:#fff;min-width:0}
-      .app{display:block;padding:0}
-      .sidebar,.topbar .toolbar,.no-print{display:none !important}
-      .topbar{padding:0 0 12px;box-shadow:none;border:none}
-      .card{box-shadow:none;border:1px solid #ccc}
-      .weeks{gap:12px}
-      .week{break-inside:avoid;page-break-inside:avoid}
-      table{min-width:0}
-    }
+  @media print{
+  @page{
+    size: landscape;
+    margin: 0.35in;
+  }
+
+  body{
+    background:#fff;
+    min-width:0;
+    zoom: 0.82;
+  }
+
+  .app{
+    display:block;
+    padding:0;
+  }
+
+  .sidebar,
+  .topbar .toolbar,
+  .no-print{
+    display:none !important;
+  }
+
+  .topbar{
+    padding:0 0 8px;
+    box-shadow:none;
+    border:none;
+  }
+
+  .card{
+    box-shadow:none;
+    border:1px solid #ccc;
+  }
+
+  .weeks{
+    gap:10px;
+  }
+
+  .week{
+    break-inside:avoid;
+    page-break-inside:avoid;
+    padding:8px;
+  }
+
+  .table-wrap{
+    overflow:visible;
+  }
+
+  table{
+    min-width:0;
+    width:100%;
+    font-size:11px;
+  }
+
+  thead th,
+  tbody td{
+    padding:5px 6px;
+  }
+
+  .employee-col{
+    min-width:130px;
+    width:130px;
+  }
+
+  .day-col{
+    min-width:95px;
+    width:95px;
+  }
+
+  .total-col{
+    min-width:80px;
+    width:80px;
+  }
+
+  input[type="time"]{
+    padding:4px 5px;
+    font-size:11px;
+  }
+
+  .shift-hours{
+    font-size:10px;
+    padding:4px 6px;
+  }
+
+  .kpis{
+    gap:6px;
+    margin-bottom:8px;
+  }
+
+  .kpi{
+    padding:8px;
+  }
+
+  .notice{
+    margin-bottom:8px;
+    padding:8px 10px;
+    font-size:11px;
+  }
+}
   </style>
 </head>
 <body>
