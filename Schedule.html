@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Schedule Maker</title>
+  <style>
+    :root{
+      --bg:#f5f7fb; --card:#ffffff; --text:#1f2430; --muted:#667085; --line:#d9deea;
+      --accent:#3458d8; --shadow:0 10px 28px rgba(16,24,40,.08);
+      --danger:#b42318; --danger-soft:#fdecec; --ok:#0f7b37; --ok-soft:#eaf8ef;
+      --warn:#8a6116; --warn-soft:#fff6df;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;min-width:1360px;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--text);background:var(--bg)}
+    .app{display:grid;grid-template-columns:350px 1fr;gap:18px;padding:18px;min-height:100vh}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+    .sidebar{position:sticky;top:18px;align-self:start;padding:16px;display:flex;flex-direction:column;gap:16px}
+    h1,h2,h3{margin:0} h1{font-size:24px} h2{font-size:18px}
+    .muted{color:var(--muted)}
+    .section{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fff}
+    label{display:block;margin:0 0 6px;font-size:12px;font-weight:800;color:#344054}
+    input,select,button{font:inherit}
+    input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--text)}
+    input[readonly]{background:#f8faff}
+    .row{display:flex;gap:10px;align-items:end}
+    .row>*{flex:1}
+    .btn{display:inline-flex;justify-content:center;align-items:center;border:none;border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:800;background:var(--accent);color:#fff;white-space:nowrap;text-decoration:none}
+    .btn.secondary{background:#eef2f8;color:#1f2430;border:1px solid var(--line)}
+    .btn.danger{background:var(--danger-soft);color:var(--danger);border:1px solid #f4c8c6}
+    .btn.small{padding:7px 10px;border-radius:8px;font-size:12px}
+    .main{display:flex;flex-direction:column;gap:16px}
+    .topbar{padding:16px 18px;display:flex;align-items:center;justify-content:space-between}
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px}
+    .employee-list,.timeoff-list{display:grid;gap:8px;margin-top:10px}
+    .employee-item,.timeoff-item{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff}
+    .employee-name{font-weight:800}
+    .smallprint{font-size:11px;color:var(--muted)}
+    .weeks{display:grid;grid-template-columns:1fr;gap:16px}
+    .week{padding:14px;overflow:hidden}
+    .week-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+    .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+    .kpi{border:1px solid var(--line);border-radius:12px;padding:10px;background:#fafbff}
+    .kpi .label{font-size:12px;color:var(--muted);margin-bottom:4px}
+    .kpi .value{font-size:18px;font-weight:900}
+    .notice{padding:10px 12px;border-radius:12px;font-size:12px;font-weight:800;margin-bottom:12px}
+    .notice.ok{background:var(--ok-soft);color:var(--ok)}
+    .notice.warn{background:var(--warn-soft);color:var(--warn)}
+    .notice.danger{background:var(--danger-soft);color:var(--danger)}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+    table{width:100%;border-collapse:collapse;min-width:1180px}
+    thead th{position:sticky;top:0;z-index:1;background:#f8faff;font-size:12px;text-align:left;padding:10px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);vertical-align:bottom}
+    tbody td{padding:8px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);vertical-align:top;background:#fff}
+    .employee-col{min-width:180px;width:180px;position:sticky;left:0;background:#fff;z-index:1}
+    thead .employee-col{z-index:2;background:#f8faff}
+    .day-col{min-width:135px;width:135px}
+    .total-col{min-width:110px;width:110px;background:#fbfbff}
+    .day-total-head{font-size:11px;color:var(--muted);margin-top:4px;display:block}
+    .shift-cell{display:grid;gap:6px}
+    .shift-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .shift-hours{font-size:11px;font-weight:800;color:#344054;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#f7f9fc;text-align:center}
+    .off-block{min-height:86px;padding:10px;border-radius:10px;background:var(--danger-soft);border:1px solid #f4c8c6;color:var(--danger);display:flex;flex-direction:column;justify-content:center;gap:4px;font-size:12px;font-weight:800}
+    .off-sub{font-size:11px;font-weight:700}
+    .weekly-hours{font-size:14px;font-weight:900}
+    .legend{font-size:12px;color:var(--muted);line-height:1.45}
+    @media print{
+      body{background:#fff;min-width:0}
+      .app{display:block;padding:0}
+      .sidebar,.topbar .toolbar,.no-print{display:none !important}
+      .topbar{padding:0 0 12px;box-shadow:none;border:none}
+      .card{box-shadow:none;border:1px solid #ccc}
+      .weeks{gap:12px}
+      .week{break-inside:avoid;page-break-inside:avoid}
+      table{min-width:0}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar card no-print">
+      <div>
+        <h1>Schedule Maker</h1>
+        <div class="muted">Build each week by employee. Requested days off are blocked automatically.</div>
+      </div>
+
+      <div class="section">
+        <h2>Schedule Settings</h2>
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label>Week 1 Start Date</label>
+            <input id="startDate" type="date">
+          </div>
+          <div style="flex:0 0 auto">
+            <button class="btn secondary" id="todayBtn" type="button">Today</button>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label>Weekly allotted hours (excluding salaried)</label>
+            <input id="allottedHours" type="number" min="0" step="0.25" placeholder="e.g. 320">
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label>Store / Schedule Title</label>
+            <input id="storeTitle" type="text" placeholder="e.g. Break Time 3158 Schedule">
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Employees</h2>
+        <div class="row" style="margin-top:10px"><div>
+          <label>Name</label>
+          <input id="empName" type="text" placeholder="Employee name">
+        </div></div>
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label>Target weekly hours</label>
+            <input id="empTarget" type="number" min="0" step="0.25" placeholder="optional">
+          </div>
+          <div>
+            <label>Status</label>
+            <select id="empStatus">
+              <option value="hourly">Hourly</option>
+              <option value="salaried">Salaried</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="addEmployeeBtn" type="button">Add Employee</button>
+        </div>
+        <div class="employee-list" id="employeeList"></div>
+      </div>
+
+      <div class="section">
+        <h2>Days Off Requests</h2>
+        <div class="row" style="margin-top:10px"><div>
+          <label>Employee</label>
+          <select id="timeoffEmployee"></select>
+        </div></div>
+        <div class="row" style="margin-top:10px">
+          <div>
+            <label>Start Date</label>
+            <input id="timeoffStart" type="date">
+          </div>
+          <div>
+            <label>End Date</label>
+            <input id="timeoffEnd" type="date">
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px"><div>
+          <label>Reason / Note</label>
+          <input id="timeoffReason" type="text" placeholder="optional">
+        </div></div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="addTimeoffBtn" type="button">Add Request</button>
+        </div>
+        <div class="timeoff-list" id="timeoffList"></div>
+      </div>
+
+      <div class="section">
+        <h2>Tools</h2>
+        <div class="toolbar" style="margin-top:10px">
+          <button class="btn secondary" id="rollBtn" type="button">Roll Forward 1 Week</button>
+          <button class="btn secondary" id="printBtn" type="button">Print</button>
+          <button class="btn secondary" id="exportBtn" type="button">Export Backup</button>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <input id="importFile" type="file" accept="application/json">
+        </div>
+        <div class="toolbar" style="margin-top:10px">
+          <button class="btn secondary" id="importBtn" type="button">Import Backup</button>
+          <button class="btn danger" id="resetBtn" type="button">Reset Everything</button>
+        </div>
+        <div class="legend" style="margin-top:10px">
+          Requested days off are blocked and cannot be edited from the schedule grid. Remove the request on the left if you need to schedule that employee after all.
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="card topbar">
+        <div>
+          <h2 id="headerTitle">Schedule Maker</h2>
+          <div class="muted">Rolling 3 weeks • desktop-first • print-friendly</div>
+        </div>
+        <div class="toolbar no-print">
+          <button class="btn secondary" id="refreshBtn" type="button">Refresh</button>
+          <button class="btn" id="topPrintBtn" type="button">Print</button>
+        </div>
+      </div>
+
+      <div class="weeks" id="weeks"></div>
+    </main>
+  </div>
+
+<script>
+const STORAGE_KEY = "schedule_maker_desktop_v2";
+function defaultState(){
+  return {storeTitle:"Schedule Maker", startDate:toDateInput(new Date()), allottedHours:0, employees:[], timeoffs:[], schedule:{}};
+}
+let state = loadState();
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return defaultState();
+    return {...defaultState(), ...JSON.parse(raw)};
+  }catch{
+    return defaultState();
+  }
+}
+function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function uid(){ return Math.random().toString(16).slice(2) + Date.now().toString(16); }
+function escapeHtml(s){ return String(s ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
+function toDateInput(d){
+  const dt = new Date(d), m = String(dt.getMonth()+1).padStart(2,"0"), day = String(dt.getDate()).padStart(2,"0");
+  return `${dt.getFullYear()}-${m}-${day}`;
+}
+function addDays(dateStr, days){
+  const d = new Date(dateStr + "T00:00:00"); d.setDate(d.getDate() + days); return toDateInput(d);
+}
+function formatDate(dateStr){
+  const d = new Date(dateStr + "T00:00:00"); return d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"});
+}
+function formatWeekRange(startStr){
+  const end = addDays(startStr, 6), s = new Date(startStr + "T00:00:00"), e = new Date(end + "T00:00:00");
+  return `${s.toLocaleDateString(undefined,{month:"short",day:"numeric"})} – ${e.toLocaleDateString(undefined,{month:"short",day:"numeric"})}`;
+}
+function hoursBetween(start, end){
+  if(!start || !end) return 0;
+  const [sh, sm] = start.split(":").map(Number), [eh, em] = end.split(":").map(Number);
+  let mins = (eh*60+em) - (sh*60+sm); if(mins < 0) mins += 24*60; return +(mins / 60).toFixed(2);
+}
+function getEmployee(id){ return state.employees.find(e => e.id === id); }
+function getKey(employeeId, dateStr){ return `${employeeId}__${dateStr}`; }
+function getShift(employeeId, dateStr){
+  const key = getKey(employeeId, dateStr);
+  if(!state.schedule[key]) state.schedule[key] = {start:"", end:""};
+  return state.schedule[key];
+}
+function setShift(employeeId, dateStr, patch){
+  const key = getKey(employeeId, dateStr);
+  state.schedule[key] = {...getShift(employeeId, dateStr), ...patch};
+  saveState(); render();
+}
+function isOff(employeeId, dateStr){
+  return state.timeoffs.some(t => t.employeeId === employeeId && dateStr >= t.start && dateStr <= t.end);
+}
+function getOffNote(employeeId, dateStr){
+  const t = state.timeoffs.find(x => x.employeeId === employeeId && dateStr >= x.start && dateStr <= x.end);
+  return t ? (t.reason || "Requested off") : "";
+}
+function employeeWeekHours(employeeId, weekStart){
+  let total = 0;
+  for(let i=0;i<7;i++){ const date = addDays(weekStart, i), s = getShift(employeeId, date); total += hoursBetween(s.start, s.end); }
+  return +total.toFixed(2);
+}
+function dayTotal(dateStr, excludeSalaried){
+  let total = 0;
+  for(const emp of state.employees){
+    if(excludeSalaried && emp.status === "salaried") continue;
+    const s = getShift(emp.id, dateStr);
+    total += hoursBetween(s.start, s.end);
+  }
+  return +total.toFixed(2);
+}
+function weekTotal(weekStart, excludeSalaried){
+  let total = 0;
+  for(let i=0;i<7;i++) total += dayTotal(addDays(weekStart, i), excludeSalaried);
+  return +total.toFixed(2);
+}
+function threeWeeks(){ return [state.startDate, addDays(state.startDate, 7), addDays(state.startDate, 14)]; }
+
+function renderEmployees(){
+  const list = document.getElementById("employeeList"); list.innerHTML = "";
+  state.employees.forEach(emp => {
+    const div = document.createElement("div");
+    div.className = "employee-item";
+    div.innerHTML = `
+      <div>
+        <div class="employee-name">${escapeHtml(emp.name)} ${emp.status === "salaried" ? '<span class="smallprint">(salaried)</span>' : ''}</div>
+        <div class="smallprint">Target: ${Number(emp.targetHours || 0).toFixed(2)} hrs</div>
+      </div>
+      <div class="toolbar">
+        <button class="btn secondary small" type="button" data-edit="${emp.id}">Edit</button>
+        <button class="btn danger small" type="button" data-remove="${emp.id}">Remove</button>
+      </div>`;
+    div.querySelector(`[data-edit="${emp.id}"]`).onclick = () => {
+      const name = prompt("Employee name", emp.name);
+      if(name === null) return;
+      const target = prompt("Target weekly hours", emp.targetHours ?? "");
+      const status = prompt("Status: hourly or salaried", emp.status);
+      emp.name = name.trim() || emp.name;
+      emp.targetHours = Number(target || 0);
+      emp.status = (status || emp.status).toLowerCase() === "salaried" ? "salaried" : "hourly";
+      saveState(); render();
+    };
+    div.querySelector(`[data-remove="${emp.id}"]`).onclick = () => {
+      if(!confirm(`Remove ${emp.name}?`)) return;
+      state.employees = state.employees.filter(e => e.id !== emp.id);
+      state.timeoffs = state.timeoffs.filter(t => t.employeeId !== emp.id);
+      Object.keys(state.schedule).forEach(key => { if(key.startsWith(emp.id + "__")) delete state.schedule[key]; });
+      saveState(); render();
+    };
+    list.appendChild(div);
+  });
+}
+
+function renderTimeoffs(){
+  const sel = document.getElementById("timeoffEmployee");
+  sel.innerHTML = state.employees.map(e => `<option value="${e.id}">${escapeHtml(e.name)}</option>`).join("");
+  const list = document.getElementById("timeoffList"); list.innerHTML = "";
+  state.timeoffs.slice().sort((a,b) => a.start.localeCompare(b.start)).forEach(t => {
+    const emp = getEmployee(t.employeeId);
+    const div = document.createElement("div");
+    div.className = "timeoff-item";
+    div.innerHTML = `
+      <div>
+        <div class="employee-name">${escapeHtml(emp?.name || "Unknown")}</div>
+        <div class="smallprint">${formatDate(t.start)} → ${formatDate(t.end)}</div>
+        ${t.reason ? `<div class="smallprint">${escapeHtml(t.reason)}</div>` : ""}
+      </div>
+      <button class="btn danger small" type="button">Remove</button>`;
+    div.querySelector("button").onclick = () => {
+      state.timeoffs = state.timeoffs.filter(x => x.id !== t.id);
+      saveState(); render();
+    };
+    list.appendChild(div);
+  });
+}
+
+function cellHtml(emp, dateStr){
+  if(isOff(emp.id, dateStr)){
+    return `<div class="off-block">OFF<div class="off-sub">${escapeHtml(getOffNote(emp.id, dateStr))}</div></div>`;
+  }
+  const s = getShift(emp.id, dateStr), hrs = hoursBetween(s.start, s.end);
+  return `
+    <div class="shift-cell">
+      <div class="shift-grid">
+        <input type="time" data-emp="${emp.id}" data-date="${dateStr}" data-field="start" value="${s.start || ""}">
+        <input type="time" data-emp="${emp.id}" data-date="${dateStr}" data-field="end" value="${s.end || ""}">
+      </div>
+      <div class="shift-hours">${hrs.toFixed(2)}h</div>
+    </div>`;
+}
+
+function weekTable(weekStart, idx){
+  const allotted = Number(state.allottedHours || 0), nonSal = weekTotal(weekStart, true), allStaff = weekTotal(weekStart, false);
+  const diff = +(allotted - nonSal).toFixed(2);
+  const notice = allotted > 0
+    ? (diff >= 0 ? `<div class="notice ok">You are ${diff.toFixed(2)} hours under the allotted weekly hours.</div>` : `<div class="notice danger">You are ${Math.abs(diff).toFixed(2)} hours over the allotted weekly hours.</div>`)
+    : `<div class="notice warn">Enter allotted weekly hours to compare against the schedule.</div>`;
+
+  const headers = Array.from({length:7}, (_,i) => {
+    const date = addDays(weekStart, i);
+    return `<th class="day-col">${formatDate(date)}<span class="day-total-head">Total: ${dayTotal(date,false).toFixed(2)} hrs</span></th>`;
+  }).join("");
+
+  const rows = state.employees.map(emp => {
+    const cells = Array.from({length:7}, (_,i) => `<td class="day-col">${cellHtml(emp, addDays(weekStart, i))}</td>`).join("");
+    return `<tr>
+      <td class="employee-col">
+        <div class="employee-name">${escapeHtml(emp.name)}</div>
+        <div class="smallprint">Target: ${Number(emp.targetHours || 0).toFixed(2)} hrs ${emp.status === "salaried" ? "• salaried" : ""}</div>
+      </td>
+      ${cells}
+      <td class="total-col"><div class="weekly-hours">${employeeWeekHours(emp.id, weekStart).toFixed(2)} hrs</div></td>
+    </tr>`;
+  }).join("");
+
+  return `
+    <section class="card week">
+      <div class="week-head">
+        <div><h2>Week ${idx + 1}</h2><div class="muted">${formatWeekRange(weekStart)}</div></div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="label">Weekly hours (non-salaried)</div><div class="value">${nonSal.toFixed(2)}</div></div>
+        <div class="kpi"><div class="label">Total hours (all staff)</div><div class="value">${allStaff.toFixed(2)}</div></div>
+        <div class="kpi"><div class="label">Allotted weekly hours</div><div class="value">${allotted.toFixed(2)}</div></div>
+      </div>
+      ${notice}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="employee-col">Employee</th>
+              ${headers}
+              <th class="total-col">Week Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows || `<tr><td colspan="9" style="padding:14px;">Add employees to begin scheduling.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </section>`;
+}
+
+function bindGridEvents(){
+  document.querySelectorAll("[data-emp][data-date][data-field]").forEach(el => {
+    el.oninput = el.onchange = () => setShift(el.dataset.emp, el.dataset.date, {[el.dataset.field]: el.value});
+  });
+}
+
+function render(){
+  document.getElementById("headerTitle").textContent = state.storeTitle || "Schedule Maker";
+  document.getElementById("storeTitle").value = state.storeTitle || "";
+  document.getElementById("startDate").value = state.startDate;
+  document.getElementById("allottedHours").value = state.allottedHours || "";
+  renderEmployees();
+  renderTimeoffs();
+  document.getElementById("weeks").innerHTML = threeWeeks().map((w, i) => weekTable(w, i)).join("");
+  bindGridEvents();
+}
+
+document.getElementById("storeTitle").addEventListener("input", e => { state.storeTitle = e.target.value; saveState(); render(); });
+document.getElementById("startDate").addEventListener("change", e => { state.startDate = e.target.value || toDateInput(new Date()); saveState(); render(); });
+document.getElementById("allottedHours").addEventListener("input", e => { state.allottedHours = Number(e.target.value || 0); saveState(); render(); });
+document.getElementById("todayBtn").onclick = () => { state.startDate = toDateInput(new Date()); saveState(); render(); };
+document.getElementById("addEmployeeBtn").onclick = () => {
+  const name = document.getElementById("empName").value.trim();
+  if(!name) return alert("Enter an employee name.");
+  const targetHours = Number(document.getElementById("empTarget").value || 0);
+  const status = document.getElementById("empStatus").value;
+  state.employees.push({id: uid(), name, targetHours, status});
+  document.getElementById("empName").value = "";
+  document.getElementById("empTarget").value = "";
+  saveState(); render();
+};
+document.getElementById("addTimeoffBtn").onclick = () => {
+  const employeeId = document.getElementById("timeoffEmployee").value;
+  const start = document.getElementById("timeoffStart").value;
+  const end = document.getElementById("timeoffEnd").value || start;
+  const reason = document.getElementById("timeoffReason").value.trim();
+  if(!employeeId || !start) return alert("Choose an employee and start date.");
+  state.timeoffs.push({id: uid(), employeeId, start, end, reason});
+  document.getElementById("timeoffReason").value = "";
+  saveState(); render();
+};
+document.getElementById("rollBtn").onclick = () => { state.startDate = addDays(state.startDate, 7); saveState(); render(); };
+document.getElementById("printBtn").onclick = () => window.print();
+document.getElementById("topPrintBtn").onclick = () => window.print();
+document.getElementById("refreshBtn").onclick = () => render();
+document.getElementById("exportBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `schedule-maker-backup-${state.startDate}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+document.getElementById("importBtn").onclick = async () => {
+  const file = document.getElementById("importFile").files && document.getElementById("importFile").files[0];
+  if(!file) return alert("Choose a backup file first.");
+  try{
+    state = {...defaultState(), ...JSON.parse(await file.text())};
+    saveState(); render();
+  }catch{
+    alert("That file could not be imported.");
+  }
+};
+document.getElementById("resetBtn").onclick = () => {
+  if(!confirm("Reset everything in the schedule maker?")) return;
+  state = defaultState();
+  saveState(); render();
+};
+
+render();
+</script>
+</body>
+</html>
